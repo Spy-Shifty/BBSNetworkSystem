@@ -44,16 +44,20 @@ public struct Position : IComponentData {
 
 # Components
 ## NetworktOwner
+```
 public struct NetworktOwner : IComponentData { }
+```
 
 This component is used to identify if the current entity is owned by my self.
 It will be added and removed automatically by the NetworkSystem. 
 Don't add this component manually!!!
 
 ## NetworkSync
+```
 public struct NetworkSync : IComponentData {
     public int instanceId;
 }
+```
 
 This component requires each entity which should be synchronized with the network.
 The instanceId member is an unique identifier and represents an specific type of entity. It is used to identify which method of the NetworkEntityFactory is used to create this entity on the remote client.
