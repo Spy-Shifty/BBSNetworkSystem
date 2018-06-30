@@ -43,13 +43,14 @@ public struct Position : IComponentData {
 ```
 
 # Components
+## NetworktOwner
 public struct NetworktOwner : IComponentData { }
 
 This component is used to identify if the current entity is owned by my self.
 It will be added and removed automatically by the NetworkSystem. 
 Don't add this component manually!!!
 
-
+## NetworkSync
 public struct NetworkSync : IComponentData {
     public int instanceId;
 }
@@ -61,7 +62,7 @@ Take a look into the [NetworkEntityFactory] and [NetworkEntityFactoryMethod] sec
 
 
 # Attributes
-[NetSync]
+## [NetSync]
 This attribute ensures that the component will be added and removed on the remote instance.
 It is also required if you want to share component member values. Attach a NetSync attribute to each component that should be shared with the network...
 
@@ -73,22 +74,25 @@ public struct Health : IComponentData {
 }
 ```
 
-[NetSyncMember]
+## [NetSyncMember]
 This attribute ensures that the component member will be synchronized through the network. Supported types are boolean, integer and float. Structs like Quaternion and Vecor3 can be synchronized with the NetSyncSubMember attribute.
 
-Parameter (used floatingpoint only):
+### Parameter (used floatingpoint only):
 
-LerpDamp: this is used to damp the interpolation time between the old received value and the new received value. This happens in a fixed intervall of 100ms which is the sendrate of the system. To counteract latency you can use this value to archive a smoother damp. E.g. a value of 0.9 will stretch the time till the new recveived value will be reached. Because reduce the deltatime of the current frame.
+#### LerpDamp: 
+this is used to damp the interpolation time between the old received value and the new received value. This happens in a fixed intervall of 100ms which is the sendrate of the system. To counteract latency you can use this value to archive a smoother damp. E.g. a value of 0.9 will stretch the time till the new recveived value will be reached. Because reduce the deltatime of the current frame.
 The default value is 1f;
 ```
 math.lerp(oldFloatValue, newFloatValue, lerpTime * LerpDamp);
 ```
 
-Accuray: Each synchronized value will be serialized as Integer value. Accuracy will define the number of decimal in the integer format by multiplying the Floatingpoint value with 10^Accuray. So a accuray of 2 means that only the 2 digits after the comma will be transmitted. The default value is 2.
+#### Accuray: 
+Each synchronized value will be serialized as Integer value. Accuracy will define the number of decimal in the integer format by multiplying the Floatingpoint value with 10^Accuray. So a accuray of 2 means that only the 2 digits after the comma will be transmitted. The default value is 2.
 e.g. 2.4567f => 245 => 2.45f
 
 
-JumpThreshold: If the difference between the real value and the latest received value is greater than the value of the JumpThreshold, than the latest received value will be instantly assigned to the real value. A value of 0 means no jumpThreshold just interpolation. The default value is 0
+#### JumpThreshold: 
+If the difference between the real value and the latest received value is greater than the value of the JumpThreshold, than the latest received value will be instantly assigned to the real value. A value of 0 means no jumpThreshold just interpolation. The default value is 0
 
 
 ```
@@ -108,7 +112,7 @@ public struct Position : IComponentData {
 }
 ```
 
-[NetSyncSubMember]
+## NetSyncSubMember]
 To synchronize structur values like Vector3 and Quaternion or any other custom type, use NetSyncSubMember attribute.
 The NetSyncSubMember only works in combination with the NetSyncMember attribute and has the same parameter. Additionally it has a MemberName attribute which defines what inner member of the structur should be synchronized.
 
@@ -146,13 +150,13 @@ public struct Position : IComponentData {
 ```
 
 
-[NetworkEntityFactory]
+## [NetworkEntityFactory]
 The NetworkEntityFactory attribute mark a class as a EntityFactory. An EntityFactory is used to create entities which will be synchronized through the network. The EntityFactory enables you to add additional Components to the synchronized entity which will not be synchronized through the network.   
 
-[NetworkEntityFactoryMethod]
+## [NetworkEntityFactoryMethod]
 In additionally to the NetworkEntityFactory the NetworkEntityFactoryMethod defines the instantation method for a specific synchronized entity. It will called on the remote client each time an entity with a NetSync component was created.
 
-InstanceId:
+#### InstanceId:
 The InstanceId parameter is used to identify which method should be used for the specific NetSync component of the created entity.
 
 ```
