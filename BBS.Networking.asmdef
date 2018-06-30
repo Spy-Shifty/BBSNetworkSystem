@@ -1,0 +1,15 @@
+{
+    "name": "BBS.Networking",
+    "references": [
+        "PhotonNetwork",
+        "Unity.Entities",
+        "Unity.Mathematics",
+        "Unity.Jobs",
+        "Unity.Collections",
+        "Unity.Entities.Hybrid"
+    ],
+    "optionalUnityReferences": [],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false
+}
