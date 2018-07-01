@@ -286,9 +286,11 @@ We use reflection methods to achive an simple and easy to use framework. Reflect
 
 This values may depends on the computer and the compiler.
 
-## Donation
+## Donate
 If you want to support us and the development of the NetworkSystem! 
-[![paypal](https://www.paypalobjects.com/en_US/i/btn/btn_donateCC_LG.gif)](Spy-Shifty@web.de)
+
+[![paypal](https://www.paypalobjects.com/en_US/i/btn/btn_donateCC_LG.gif)](https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=GTWT5GJSL7CEQ)
+
 Thank you very much! 
 
 
