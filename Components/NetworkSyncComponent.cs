@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using Unity.Entities;
 using UnityEngine;
 
+[Serializable]
 public struct NetworkSync : IComponentData {
     public int instanceId;
 }

@@ -250,6 +250,25 @@ this method will automatically setup all systems with the network manager
 
 # Networking in detail
 
+## Authority and anti cheat mechanism
+Only the client that owns the entity (NetworkOwner component attached to it) has the authority to change the state of the entity. Therefore interaction with entities, that you not own, will always be handled on the remote part, by the owner of that entitie.
+E.g. if you hit an entity, the hit information and threfore the damage applied to the hitten entity will only be set by the owner of that entity.
+More clearly: 
+ * Client A's entity shoots on the entity owned by client B. 
+ * Client B receive the shoot information and applies the damage to it's entity. (which he owns)
+ * Client B will send the new health or dead state to client A.
+
+We don't offer a mechanism against cheating at the moment. This will may be a part of a future release.
+
+## Hostmigration
+Hostmigration should be simple. Each client knows the full state of all clients. So if the current master client leaves the game, a new masterclient should be assigned and propageted.
+Well there may a issue of package lost especially for rarely changed members or components. This won't handled at the moment.
+ 
+
+## Handling joining players in running game
+Joining a player in a running game is no problem. The master client will send the full world state to that client. 
+ 
+ 
 ## Message Size and the Number of Packages
 The NetworkSystem was created to reduce the size and the number of packages send through the network. Basically because of the use of Photon Network Engine and to support mobile devices and lots of players.
 
@@ -267,6 +286,10 @@ We use reflection methods to achive an simple and easy to use framework. Reflect
 
 This values may depends on the computer and the compiler.
 
+## Donation
+If you want to support us and the development of the NetworkSystem! 
+[![paypal](https://www.paypalobjects.com/en_US/i/btn/btn_donateCC_LG.gif)](Spy-Shifty@web.de)
+Thank you very much! 
 
 
 

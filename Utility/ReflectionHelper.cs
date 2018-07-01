@@ -387,7 +387,11 @@ internal class ReflectionUtility {
     }
 
     public NetworkInstantiationHandlerDelegate GetEntityFactoryMethod(int id) {
-        return entityFactoryMethodMap[id];
+        try {
+            return entityFactoryMethodMap[id];
+        } catch {
+            throw new NetworkEntityFactoryMethodNotFoundException(id);
+        }
     }
 
     public NetworkMemberInfo[] GetNetworkMemberInfo(ComponentType componentType) {

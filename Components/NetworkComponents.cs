@@ -7,51 +7,37 @@ using Unity.Entities;
 using Unity.Mathematics;
 using UnityEngine;
 
-public struct boolean {
-    private byte boolValue;
+//public struct NetworkMessageEvent : ISharedComponentData {
+//    public byte id;
+//}
 
-    public boolean(bool value) {
-        boolValue = (byte)(value ? 1 : 0);
-    }
-    public static implicit operator bool(boolean value) {
-        return value.boolValue == 1;
-    }
-    public static implicit operator boolean(bool value) {
-        return new boolean(value);
-    }
-}
+//public struct NetworkSendEvent : IComponentData {
+//    public boolean reliable;
+//    public EventCaching eventCaching;
+//    public byte group;
+//    public byte channel;
+//}
 
-public struct NetworkMessageEvent : ISharedComponentData {
-    public byte id;
-}
+//public struct NetworkReceiveEvent : IComponentData {
+//    public int senderId;
+//}
 
-public struct NetworkSendEvent : IComponentData {
-    public boolean reliable;
-    public EventCaching eventCaching;
-    public byte group;
-    public byte channel;
-}
-
-public struct NetworkReceiveEvent : IComponentData {
-    public int senderId;
-}
-
-public struct NetworkPlayerJoined : IComponentData { public int id; }
-public struct NetworkPlayerLeft : IComponentData { public int id; }
-public struct NetworkRoomJoined : IComponentData { }
-public struct NetworkRoomLeft : IComponentData { }
-public struct NetworkJoinedLobby : IComponentData { }
-public struct NetworkJoinedGame : IComponentData { }
-public struct NetworkConnetedToGameServer : IComponentData { }
-public struct NetworkConnetedToMasterServer : IComponentData { }
-public struct NetworkDisconnetedFromMasterServer : IComponentData { }
-public struct NetworkDisconneted : IComponentData { }
+//public struct NetworkPlayerJoined : IComponentData { public int id; }
+//public struct NetworkPlayerLeft : IComponentData { public int id; }
+//public struct NetworkRoomJoined : IComponentData { }
+//public struct NetworkRoomLeft : IComponentData { }
+//public struct NetworkJoinedLobby : IComponentData { }
+//public struct NetworkJoinedGame : IComponentData { }
+//public struct NetworkConnetedToGameServer : IComponentData { }
+//public struct NetworkConnetedToMasterServer : IComponentData { }
+//public struct NetworkDisconnetedFromMasterServer : IComponentData { }
+//public struct NetworkDisconneted : IComponentData { }
 
 
 
 //internal struct NetworkSyncState :ISystemStateComponentData {
-    //internal int networkId;
-    //internal int actorId;
+//internal int networkId;
+//internal int actorId;
 //}
 
 //internal struct NetworkMemberState<T> : ISystemStateComponentData { }

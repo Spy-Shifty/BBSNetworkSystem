@@ -130,6 +130,7 @@ public class NetworkReceiveSystem : ComponentSystem {
     }
 
     private void ReceiveNetworkUpdate(byte[] data) {
+        
         NetworkSyncDataContainer networkSyncDataContainer = messageSerializer.Deserialize(data);
         if (LogReceivedMessages && (networkSyncDataContainer.AddedNetworkSyncEntities.Any() 
             || networkSyncDataContainer.RemovedNetworkSyncEntities.Any() 
