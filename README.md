@@ -8,7 +8,7 @@ This is an easy to use Network System. No need to handle how to sync your member
 To synchronize an entity through the network, it will require the NetworkSync component attached to it. This component holds a instanceId, which is an unique identifier that discripes the overall type of an entity. It is used together with the NetworkEntityFactory and NetworkEntityFactoryMethods to create the remote entity. The NetworkEntityFactory can be used to create entities with "offline" component. for e.g. if you require different components for the remote entity instance.
 
 
-```
+```csharp
 [NetworkEntityFactory] // this is a NetworkEntityFactory
 public static class EntityFactory {
 
@@ -22,7 +22,7 @@ public static class EntityFactory {
 
 To synchonize an component through the network attach the NetSyc attribute to the component. This attribute handles Adding and removing of an Component through the network. To synchonize component values, you have to add NetSyncMember to it. 
 
-```
+```csharp
 [NetSync] // sync the component through the network
 public struct Health : IComponentData {
 
@@ -44,7 +44,7 @@ public struct Position : IComponentData {
 
 # Components
 ## NetworktOwner
-```
+```csharp
 public struct NetworktOwner : IComponentData { }
 ```
 
@@ -53,7 +53,7 @@ It will be added and removed automatically by the NetworkSystem.
 Don't add this component manually!!!
 
 ## NetworkSync
-```
+```csharp
 public struct NetworkSync : IComponentData {
     public int instanceId;
 }
@@ -70,7 +70,7 @@ Take a look into the [NetworkEntityFactory] and [NetworkEntityFactoryMethod] sec
 This attribute ensures that the component will be added and removed on the remote instance.
 It is also required if you want to share component member values. Attach a NetSync attribute to each component that should be shared with the network...
 
-```
+```csharp
 [NetSync] // sync the component through the network
 public struct Health : IComponentData {
     [NetSyncMember] //sync the value through the network
@@ -86,7 +86,7 @@ This attribute ensures that the component member will be synchronized through th
 #### LerpDamp: 
 this is used to damp the interpolation time between the old received value and the new received value. This happens in a fixed intervall of 100ms which is the sendrate of the system. To counteract latency you can use this value to archive a smoother damp. E.g. a value of 0.9 will stretch the time till the new recveived value will be reached. Because reduce the deltatime of the current frame.
 The default value is 1f;
-```
+```csharp
 math.lerp(oldFloatValue, newFloatValue, lerpTime * LerpDamp);
 ```
 
@@ -99,7 +99,7 @@ e.g. 2.4567f => 245 => 2.45f
 If the difference between the real value and the latest received value is greater than the value of the JumpThreshold, than the latest received value will be instantly assigned to the real value. A value of 0 means no jumpThreshold just interpolation. The default value is 0
 
 
-```
+```csharp
 [NetSync] // sync the component through the network
 public struct Health : IComponentData {     
     [NetSyncMember]
@@ -125,7 +125,7 @@ You can also define each NetSyncSubMember independently from each other.
 
 Hint: if you override one value of an NetSyncSubMember you have to assign the other values to or the defaults will be assigned to that NetSyncSubMember
 
-```
+```csharp
 [NetSync]
 public struct Position : IComponentData {
     [NetSyncMember(lerpDamp: 0.9f, jumpThreshold: 0)]
@@ -163,7 +163,7 @@ In additionally to the NetworkEntityFactory the NetworkEntityFactoryMethod defin
 #### InstanceId:
 The InstanceId parameter is used to identify which method should be used for the specific NetSync component of the created entity.
 
-```
+```csharp
 [NetworkEntityFactory] // this is a NetworkEntityFactory
 public static class EntityFactory {
 
@@ -179,6 +179,7 @@ public static class EntityFactory {
 # NetworkManager
 The NetworkManager is used as interface to communicate with the Network. 
 
+```csharp
 public delegate void EventDataDelegate(byte eventId, int playerId, object data);
 public delegate void PlayerJoinedDelegate(int playerId);
 public delegate void PlayerLeftDelegate(int playerId);
@@ -208,7 +209,7 @@ public enum NetworkReceiverGroup {
     MasterClient,
     Target,
 }
-
+```
 This is the main interface to the specific network solution. This was mainly designed for Photon Realtime Network Engine
 
 LocalPlayerID: unique identifier of the local player
@@ -224,7 +225,7 @@ GetNetworkId(): should generate a localy unique identifier, is used to identify 
 
 
 
-
+```csharp
 public enum NetworkReceiverGroup {
     Others,
     MasterClient,
@@ -235,13 +236,13 @@ public struct NetworkEventOptions {
     public NetworkReceiverGroup Receiver;
     public int[] TargetActors;
 }
-
+```
 Eventoption to filter packages for specific receivers
 NetworkReceiverGroup: send only to Other clients, Master client or to a specific clients
 TargetActors: array of clientIds default is null
 
 To assign the Networkmanager to the Systems just call
-```
+```csharp
 World.Active.SetNetworkManager(networkManager);
 ```
 this method will automatically setup all systems with the network manager
