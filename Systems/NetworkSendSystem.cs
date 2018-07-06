@@ -16,14 +16,14 @@ public class NetworkSendSystem : ComponentSystem {
         public ComponentDataArray<NetworkSync> networkSyncComponents;
         public SubtractiveComponent<NetworkSyncState> networkSyncStateComponents;
         public EntityArray entities;
-        public int Length;
+        public readonly int Length;
     }
 
     struct RemovedEntityData {
         public SubtractiveComponent<NetworkSync> networkSyncComponents;
         public ComponentDataArray<NetworkSyncState> networkSyncStateComponents;
         public EntityArray entities;
-        public int Length;
+        public readonly int Length;
     }
 
     [Inject] AddedEntityData addedSyncEntities;

@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Reflection;
+using Unity.Collections;
 using Unity.Entities;
 using UnityEngine;
 
@@ -12,9 +13,9 @@ public class NetworkSyncFullStatedSystem : ComponentSystem {
         public ComponentDataArray<NetworkSync> networkSyncComponents;
         public ComponentDataArray<NetworkSyncState> networkSyncStateComponents;
         public EntityArray entities;
-        public int Length;
+        public readonly int Length;
     }
-    
+
     [Inject] AddedEntityData addedSyncEntities;
 
     private static bool LogSendMessages;
@@ -80,20 +81,17 @@ public class NetworkSyncFullStatedSystem : ComponentSystem {
     private void Entities() {
         EntityArray entities = addedSyncEntities.entities;
         ComponentDataArray<NetworkSync> networkSyncs = addedSyncEntities.networkSyncComponents;
-
+        ComponentDataArray<NetworkSyncState> networkSyncStates = addedSyncEntities.networkSyncStateComponents;
         for (int i = 0; i < entities.Length; i++) {
             int instanceId = networkSyncs[i].instanceId;
-            NetworkSyncState component = new NetworkSyncState() {
-                actorId = networkManager.LocalPlayerID,
-                networkId = networkManager.GetNetworkId(),
-            };
+
             Entity entity = entities[i];
             NetworkEntityData networkEntityData = new NetworkEntityData {
                 InstanceId = networkSyncs[i].instanceId,
 
                 NetworkSyncEntity = new NetworkSyncEntity {
-                    ActorId = component.actorId,
-                    NetworkId = component.networkId,
+                    ActorId = networkSyncStates[i].actorId,
+                    NetworkId = networkSyncStates[i].networkId,
                 }
             };
 

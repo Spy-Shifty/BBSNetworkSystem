@@ -145,7 +145,7 @@ public class NetworkReceiveSystem : ComponentSystem {
         NativeHashMap<int, int> entityIndexMap = new NativeHashMap<int, int>(entities.Length, Allocator.Temp);
         for (int i = 0; i < entities.Length; i++) {
             NetworkSyncState networkSyncState = networkSyncStateComponents[i];
-            int hash = (int)math.pow(networkSyncState.actorId,  networkSyncState.networkId);
+            int hash = GetHash(networkSyncState.actorId, networkSyncState.networkId);
             entityIndexMap.TryAdd(hash, i);
         }
 
@@ -179,7 +179,7 @@ public class NetworkReceiveSystem : ComponentSystem {
                 continue;
             }
             NetworkSyncEntity networkSyncEntity = removedNetworkSyncEntities[i];
-            int hash = (int)math.pow(networkSyncEntity.ActorId, networkSyncEntity.NetworkId);
+            int hash = GetHash(networkSyncEntity.ActorId, networkSyncEntity.NetworkId);
             if (entityIndexMap.TryGetValue(hash, out int index)) {
                 Entity entity = entities[index];
                 PostUpdateCommands.RemoveComponent<NetworkSyncState>(entity);
@@ -206,7 +206,7 @@ public class NetworkReceiveSystem : ComponentSystem {
                 continue;
             }
 
-            int hash = (int)math.pow(networkSyncEntity.ActorId, networkSyncEntity.NetworkId);
+            int hash = GetHash(networkSyncEntity.ActorId, networkSyncEntity.NetworkId);
             if (!entityIndexMap.TryGetValue(hash, out int index)) {
                 continue;
             }
@@ -239,9 +239,13 @@ public class NetworkReceiveSystem : ComponentSystem {
             NetworkSendSystem.AllNetworkSendMessageUtility.AddComponents(entity, networkSyncEntity.ActorId, networkSyncEntity.NetworkId, addedComponents);
             NetworkSendSystem.AllNetworkSendMessageUtility.RemoveComponents(entity, networkSyncEntity.ActorId, networkSyncEntity.NetworkId, removedComponents);
             NetworkSendSystem.AllNetworkSendMessageUtility.SetComponentData(entity, networkSyncEntity.ActorId, networkSyncEntity.NetworkId, componentData);
-        }        
+        }
 
         entityIndexMap.Dispose();
+    }
+
+    private static int GetHash(int actorId, int networkId) {
+        return (int)unchecked(math.pow(actorId, networkId));
     }
 
     void AddComponent<T>(Entity entity, List<MemberDataContainer> memberDataContainers) where T : struct, IComponentData {
