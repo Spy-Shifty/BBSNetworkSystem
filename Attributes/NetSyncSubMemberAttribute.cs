@@ -15,14 +15,14 @@ public sealed class NetSyncSubMemberAttribute : NetSyncBaseAttribute {
     /// <param name="lerpSpeed">use to smoothly interpolate the current value and the latest network value</param>
     /// <param name="reliable">send this field value reliable</param>
     /// <param name="accuracy">will only be applied to float fields</param>
-    public NetSyncSubMemberAttribute(string memberName, float lerpSpeed = 1, /*bool reliable = true,*/ int accuracy = 2, float jumpThreshold = 0) 
-        : base(lerpSpeed, /*reliable,*/ accuracy, jumpThreshold) {
+    public NetSyncSubMemberAttribute(string memberName, float lerpSpeed = 1, /*bool reliable = true,*/ int accuracy = 2, float jumpThreshold = 0, bool initOnly = false) 
+        : base(lerpSpeed, /*reliable,*/ accuracy, jumpThreshold, initOnly) {
         MemberName = memberName;
         OverriddenValues = true;
     }
 
     public NetSyncSubMemberAttribute(string memberName)
-        : base(0, /*false,*/ 0, 0) {
+        : base(0, /*false,*/ 0, 0, false) {
         MemberName = memberName;
         OverriddenValues = false;
     }

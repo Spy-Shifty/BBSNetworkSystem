@@ -10,4 +10,8 @@
     public static implicit operator boolean(bool value) {
         return new boolean(value);
     }
+
+    public override string ToString() {
+        return ((bool)this).ToString();
+    }
 }

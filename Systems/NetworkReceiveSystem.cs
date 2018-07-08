@@ -249,7 +249,7 @@ public class NetworkReceiveSystem : ComponentSystem {
     }
 
     void AddComponent<T>(Entity entity, List<MemberDataContainer> memberDataContainers) where T : struct, IComponentData {
-        Debug.Log(typeof(T));
+        //Debug.Log(typeof(T));
         int numberOfMembers = reflectionUtility.GetNumberOfMembers(typeof(T));
         NetworkMemberInfo[] networkMemberInfos = reflectionUtility.GetNetworkMemberInfo(ComponentType.Create<T>());
         if (!EntityManager.HasComponent<T>(entity)) {

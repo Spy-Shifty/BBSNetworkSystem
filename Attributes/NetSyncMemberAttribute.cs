@@ -12,6 +12,6 @@ public sealed class NetSyncMemberAttribute : NetSyncBaseAttribute {
     /// <param name="lerpDamp">use to smoothly interpolate the current value and the latest network value</param>
     //// <param name="reliable">send this field value reliable</param>
     /// <param name="accuracy">will only be applied to float fields</param>    
-    public NetSyncMemberAttribute(float lerpDamp = 1, /*bool reliable = false,*/ int accuracy = 2, float jumpThreshold = 0) 
-        : base(lerpDamp, /*reliable,*/ accuracy, jumpThreshold) { }
+    public NetSyncMemberAttribute(float lerpDamp = 1, /*bool reliable = false,*/ int accuracy = 2, float jumpThreshold = 0, bool initOnly = false) 
+        : base(lerpDamp, /*reliable,*/ accuracy, jumpThreshold, initOnly) { }
 }

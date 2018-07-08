@@ -284,7 +284,12 @@ public class NetworkSendSystem : ComponentSystem {
                 ComponentTypeId = reflectionUtility.GetComponentTypeID(componentType),
             };
             for (int j = 0; j < networkMemberInfos.Length; j++) {
-                int newValue = (networkMemberInfos[j] as NetworkMemberInfo<T>).GetValue(networkComponents[i]);  
+                NetworkMemberInfo<T> networkMemberInfo = (networkMemberInfos[j] as NetworkMemberInfo<T>);
+                if (networkMemberInfo.syncAttribute.InitOnly) {
+                    continue;
+                }
+
+                int newValue = networkMemberInfo.GetValue(networkComponents[i]);  
                 if(newValue != values[j]) {
                     componentDataContainer.MemberData.Add(new MemberDataContainer {
                         MemberId = j,
@@ -331,7 +336,7 @@ public class NetworkSendSystem : ComponentSystem {
             data = messageSerializer.Serialize(ownNetworkSendMessageUtility.DataContainer);
 
         }
-        Debug.Log("NetworkSendSystem:\n" + LastSendMessage);
+        //Debug.Log("NetworkSendSystem:\n" + LastSendMessage);
         networkManager.SendMessage(NetworkEvents.DataSync, data, true, networkEventOptions);
 
         ownNetworkSendMessageUtility.Reset();

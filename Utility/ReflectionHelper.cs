@@ -14,12 +14,16 @@ internal delegate T RefFunc<S, T>(ref S instance);
 
 internal abstract class NetworkMemberInfo { }
 internal abstract class NetworkMemberInfo<OBJ> : NetworkMemberInfo {
+    public readonly NetSyncBaseAttribute syncAttribute;
+    public NetworkMemberInfo(NetSyncBaseAttribute syncAttribute) {
+        this.syncAttribute = syncAttribute;
+    }
+
     public abstract void SetValue(ref OBJ obj, int oldValue, int newValue, float deltaTimeFrame, float deltaTimeMessage);
     public abstract int GetValue(OBJ obj);
 }
 
 internal sealed class NetworkMemberInfo<OBJ, TYPE> : NetworkMemberInfo<OBJ> {
-    private readonly NetSyncBaseAttribute syncBaseAttribute;
     //private readonly MemberInfo memberInfo;
     private readonly NetworkMemberInfo parent;
 
@@ -28,8 +32,7 @@ internal sealed class NetworkMemberInfo<OBJ, TYPE> : NetworkMemberInfo<OBJ> {
 
     private NetworkMath networkMath;
 
-    public NetworkMemberInfo(MemberInfo memberInfo, NetSyncBaseAttribute syncBaseAttribute) {
-        this.syncBaseAttribute = syncBaseAttribute;
+    public NetworkMemberInfo(MemberInfo memberInfo, NetSyncBaseAttribute syncAttribute) : base(syncAttribute) {
         //Debug.Log(typeof(OBJ) + " --- " + typeof(TYPE));
         switch (memberInfo.MemberType) {
             case MemberTypes.Field:
@@ -52,14 +55,13 @@ internal sealed class NetworkMemberInfo<OBJ, TYPE> : NetworkMemberInfo<OBJ> {
         if (typeType == typeof(int)) {
             networkMath = new NetworkMathInteger();
         } else if (typeType == typeof(float)) {
-            networkMath = new NetworkMathFloat(syncBaseAttribute.Accuracy, syncBaseAttribute.LerpSpeed, syncBaseAttribute.JumpThreshold);
+            networkMath = new NetworkMathFloat(syncAttribute.Accuracy, syncAttribute.LerpSpeed, syncAttribute.JumpThreshold);
         } else if (typeType == typeof(boolean)) {
             networkMath = new NetworkMathBoolean();
         }       
     }
 
-    public NetworkMemberInfo(MemberInfo memberInfo, NetworkMemberInfo parent, NetSyncBaseAttribute syncBaseAttribute) {
-        this.syncBaseAttribute = syncBaseAttribute;
+    public NetworkMemberInfo(MemberInfo memberInfo, NetworkMemberInfo parent, NetSyncBaseAttribute syncAttribute) : base(syncAttribute) {
         this.parent = parent;
     }
 
@@ -73,7 +75,6 @@ internal sealed class NetworkMemberInfo<OBJ, TYPE> : NetworkMemberInfo<OBJ> {
 }
 
 internal sealed class NetworkMemberInfo<Parent_OBJ, OBJ, TYPE> : NetworkMemberInfo<Parent_OBJ> {
-    private readonly NetSyncBaseAttribute syncBaseAttribute;
     //private readonly MemberInfo memberInfo;
     private readonly NetworkMemberInfo<Parent_OBJ, OBJ> parent;
 
@@ -82,8 +83,7 @@ internal sealed class NetworkMemberInfo<Parent_OBJ, OBJ, TYPE> : NetworkMemberIn
     public readonly RefAction<OBJ, TYPE> SetValueDelegate;
     private NetworkMath networkMath;
 
-    public NetworkMemberInfo(MemberInfo memberInfo, NetworkMemberInfo parent, NetSyncBaseAttribute syncBaseAttribute) {
-        this.syncBaseAttribute = syncBaseAttribute;
+    public NetworkMemberInfo(MemberInfo memberInfo, NetworkMemberInfo parent, NetSyncBaseAttribute syncAttribute) : base(syncAttribute) {
         this.parent = (NetworkMemberInfo<Parent_OBJ, OBJ>)parent;
         //Debug.Log(typeof(Parent_OBJ) + " --- " + typeof(OBJ) + " --- " + typeof(TYPE));
 
@@ -108,12 +108,11 @@ internal sealed class NetworkMemberInfo<Parent_OBJ, OBJ, TYPE> : NetworkMemberIn
         if (typeType == typeof(int)) {
             networkMath = new NetworkMathInteger();
         } else if (typeType == typeof(float)) {
-            networkMath = new NetworkMathFloat(syncBaseAttribute.Accuracy, syncBaseAttribute.LerpSpeed, syncBaseAttribute.JumpThreshold);
+            networkMath = new NetworkMathFloat(syncAttribute.Accuracy, syncAttribute.LerpSpeed, syncAttribute.JumpThreshold);
         } else if (typeType == typeof(boolean)) {
             networkMath = new NetworkMathBoolean();
         }
     }
-
 
     public override void SetValue(ref Parent_OBJ parentObj, int oldValue, int newValue, float deltaTimeFrame, float deltaTimeMessage) {
         OBJ obj = parent.GetValueDelegate(ref parentObj);

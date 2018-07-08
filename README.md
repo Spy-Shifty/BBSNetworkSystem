@@ -98,6 +98,8 @@ e.g. 2.4567f => 245 => 2.45f
 #### JumpThreshold: 
 If the difference between the real value and the latest received value is greater than the value of the JumpThreshold, than the latest received value will be instantly assigned to the real value. A value of 0 means no jumpThreshold just interpolation. The default value is 0
 
+#### InitOnly:
+Synchronizeation only happens on adding component. Later changes won't be synchronized anymore. The default value is False
 
 ```csharp
 [NetSync] // sync the component through the network
