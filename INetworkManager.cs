@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
-using ExitGames.Client.Photon.LoadBalancing;
 using UnityEngine;
 
 public delegate void EventDataDelegate(byte eventId, int playerId, object data);

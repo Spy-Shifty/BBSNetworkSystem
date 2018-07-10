@@ -1,7 +1,6 @@
 {
     "name": "BBS.Networking",
     "references": [
-        "PhotonNetwork",
         "Unity.Entities",
         "Unity.Mathematics",
         "Unity.Jobs",
