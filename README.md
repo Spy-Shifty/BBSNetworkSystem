@@ -78,6 +78,27 @@ public struct Health : IComponentData {
 }
 ```
 
+## [ProxyNetSync]
+This attribute enable synchronization of the unity build in or 3rd party components.
+Create a ProxyComponent with the same signature as the original component.
+Assign NetSyncMember and NetSyncSubMember attributes to your members. 
+Assign the ProxyNetSync attribute with type of the original component to your proxy class.
+
+This attribute ensures that the component will be added and removed on the remote instance.
+It is also required if you want to share component member values. Attach a NetSync attribute to each component that should be shared with the network...
+
+```csharp
+[ProxyNetSync(typeof(Position))] // sync Unity's Position component through the network
+public struct PositionProxy : IComponentData {
+    // Assign the same member with the same name and type aswell the order to the class   
+    [NetSyncMember(lerpDamp: 0.9f, jumpThreshold: 0)]
+    [NetSyncSubMember("x")]
+    [NetSyncSubMember("y")]
+    [NetSyncSubMember("z")]
+    public float3 Value;
+}
+```
+
 ## [NetSyncMember]
 This attribute ensures that the component member will be synchronized through the network. Supported types are boolean, integer and float. Structs like Quaternion and Vecor3 can be synchronized with the NetSyncSubMember attribute.
 
@@ -118,7 +139,7 @@ public struct Position : IComponentData {
 }
 ```
 
-## NetSyncSubMember]
+## [NetSyncSubMember]
 To synchronize structur values like Vector3 and Quaternion or any other custom type, use NetSyncSubMember attribute.
 The NetSyncSubMember only works in combination with the NetSyncMember attribute and has the same parameter. Additionally it has a MemberName attribute which defines what inner member of the structur should be synchronized.
 
