@@ -79,8 +79,8 @@ public struct Health : IComponentData {
 ```
 
 ## [ProxyNetSync]
-This attribute enable synchronization of the unity build in or 3rd party components.
-Create a ProxyComponent with the same signature as the original component.
+This attribute enable synchronization of the Unity build in or 3rd party components.
+Create a proxy component with the same signature as the original component.
 Assign NetSyncMember and NetSyncSubMember attributes to your members. 
 Assign the ProxyNetSync attribute with type of the original component to your proxy class.
 
