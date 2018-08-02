@@ -27,7 +27,7 @@ public class NetworkReceiveSystem : ComponentSystem {
 
     protected override void OnCreateManager(int capacity) {
         networkFactory = new NetworkFactory(EntityManager);
-        ComponentType[] componentTypes = reflectionUtility.ComponentTypes;
+        ComponentType[] componentTypes = reflectionUtility.ComponentTypes.ToArray();
         Type networkSystemType = typeof(NetworkReceiveSystem);
         for (int i = 0; i < componentTypes.Length; i++) {
             AddComponentsMethods.Add(componentTypes[i],
@@ -57,6 +57,7 @@ public class NetworkReceiveSystem : ComponentSystem {
         }
 
         messageSerializer = new NetworkMessageSerializer<NetworkSyncDataContainer>();
+        Enabled = networkManager != null;
     }
 
     protected override void OnDestroyManager() {
@@ -64,7 +65,16 @@ public class NetworkReceiveSystem : ComponentSystem {
         networkFactory.Dispose();
     }
 
+    protected override void OnStartRunning() {
+        base.OnStartRunning();
+        Enabled = networkManager != null;
+    }
+
     protected override void OnUpdate() {
+        if(networkManager == null) {
+            return;
+        }
+
         //return;
         networkManager.Update();
         for (int i = 0; i < UpdateComponentsMethods.Count; i++) {
@@ -337,7 +347,8 @@ public class NetworkReceiveSystem : ComponentSystem {
             networkManager.OnEventData += NetworkManager_OnEventData;
             this.networkManager.OnPlayerLeft += NetworkManager_OnPlayerLeft;
             this.networkManager.OnDisconnected += NetworkManager_OnDisconnect;
-
         }
+
+        Enabled = networkManager != null;
     }
 }

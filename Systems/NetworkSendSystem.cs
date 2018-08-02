@@ -56,7 +56,7 @@ public class NetworkSendSystem : ComponentSystem {
 
     protected override void OnCreateManager(int capacity) {
         messageSerializer = new NetworkMessageSerializer<NetworkSyncDataContainer>();
-        ComponentType[] componentTypes = reflectionUtility.ComponentTypes;
+        ComponentType[] componentTypes = reflectionUtility.ComponentTypes.ToArray();
         networkFactory = new NetworkFactory(EntityManager);
         Type networkSystemType = typeof(NetworkSendSystem);
         for (int i = 0; i < componentTypes.Length; i++) {
@@ -86,7 +86,7 @@ public class NetworkSendSystem : ComponentSystem {
                     .MakeGenericMethod(componentTypes[i].GetManagedType())));
         }
 
-
+        Enabled = networkManager != null;
     }
 
     protected override void OnDestroyManager() {
@@ -94,8 +94,13 @@ public class NetworkSendSystem : ComponentSystem {
         networkFactory.Dispose();
     }
 
+    protected override void OnStartRunning() {
+        base.OnStartRunning();
+        Enabled = networkManager != null;
+    }
+
     protected override void OnUpdate() {
-        if (!networkManager.IsConnectedAndReady) {
+        if (networkManager == null || !networkManager.IsConnectedAndReady) {
             return;
         }
 
@@ -285,7 +290,7 @@ public class NetworkSendSystem : ComponentSystem {
             };
             for (int j = 0; j < networkMemberInfos.Length; j++) {
                 NetworkMemberInfo<T> networkMemberInfo = (networkMemberInfos[j] as NetworkMemberInfo<T>);
-                if (networkMemberInfo.syncAttribute.InitOnly) {
+                if (networkMemberInfo.netSyncOptions.InitOnly) {
                     continue;
                 }
 
@@ -345,5 +350,6 @@ public class NetworkSendSystem : ComponentSystem {
 
     internal void SetNetworkManager(INetworkManager networkManager) {
         this.networkManager = networkManager;
+        Enabled = networkManager != null;
     }
 }

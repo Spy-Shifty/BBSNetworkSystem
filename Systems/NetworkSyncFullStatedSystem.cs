@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Reflection;
 using Unity.Collections;
 using Unity.Entities;
@@ -23,8 +24,7 @@ public class NetworkSyncFullStatedSystem : ComponentSystem {
     //private readonly NetworkSyncDataContainer ownNetworkSyncDataContainer = new NetworkSyncDataContainer();
     //private readonly Dictionary<Entity, NetworkSyncDataEntityContainer> ownEntityContainerMap = new Dictionary<Entity, NetworkSyncDataEntityContainer>();
     private readonly NetworkSendMessageUtility networkSendMessageUtility = new NetworkSendMessageUtility();
-
-
+    
     //private readonly List<NetworkMethodInfo<NetworkSyncFullStatedSystem>> ComponentDataMethods = new List<NetworkMethodInfo<NetworkSyncFullStatedSystem>>();
     private readonly List<NetworkInOutMethodInfo<NetworkSyncFullStatedSystem, Entity, ComponentDataContainer>> GetComponentDataMethods = new List<NetworkInOutMethodInfo<NetworkSyncFullStatedSystem, Entity, ComponentDataContainer>>();
 
@@ -36,7 +36,7 @@ public class NetworkSyncFullStatedSystem : ComponentSystem {
 
     protected override void OnCreateManager(int capacity) {
         messageSerializer = new NetworkMessageSerializer<NetworkSyncDataContainer>();
-        ComponentType[] componentTypes = reflectionUtility.ComponentTypes;
+        ComponentType[] componentTypes = reflectionUtility.ComponentTypes.ToArray();
         GetComponentGroup(typeof(NetworkSync));
 
         Type networkSystemType = typeof(NetworkSyncFullStatedSystem);
@@ -46,6 +46,8 @@ public class NetworkSyncFullStatedSystem : ComponentSystem {
                     .GetMethod("GetComponentData", BindingFlags.Instance | BindingFlags.NonPublic)
                     .MakeGenericMethod(componentTypes[i].GetManagedType())));
         }
+
+        Enabled = networkManager != null;
     }
 
     protected override void OnDestroyManager() {
@@ -62,11 +64,16 @@ public class NetworkSyncFullStatedSystem : ComponentSystem {
         jonedPlayer.Remove(player);
     }
 
+    protected override void OnStartRunning() {
+        base.OnStartRunning();
+        Enabled = networkManager != null;
+    }
 
     protected override void OnUpdate() {
-        if (!networkManager.IsConnectedAndReady) {
+        if (networkManager == null || !networkManager.IsConnectedAndReady) {
             return;
         }
+
         if (jonedPlayer.Count == 0 || !networkManager.IsMaster) {
             jonedPlayer.Clear();
             return;
@@ -154,5 +161,7 @@ public class NetworkSyncFullStatedSystem : ComponentSystem {
             networkManager.OnPlayerJoined += NetworkManager_OnPlayerJoined;
             networkManager.OnPlayerLeft += NetworkManager_OnPlayerLeft;
         }
+        Enabled = networkManager != null;
     }
 }
+

@@ -7,6 +7,7 @@
 public sealed class NetSyncSubMemberAttribute : NetSyncBaseAttribute {
     public readonly string MemberName;
     public readonly bool OverriddenValues;
+
     /// <summary>
     /// This attribute signs that the subfield of the field will be synchronized through the network. 
     /// The containing class also requires the <see cref="NetSyncAttribute"/> and <see cref="NetSyncMemberAttribute"/>

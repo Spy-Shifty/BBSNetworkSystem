@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Reflection;
 using Unity.Entities;
 
@@ -12,7 +13,7 @@ public class NetworkDataAssignParentSystem : ComponentSystem {
     private readonly ReflectionUtility reflectionUtility = new ReflectionUtility();
 
     protected override void OnCreateManager(int capacity) {
-        ComponentType[] componentTypes = reflectionUtility.ComponentTypes;
+        ComponentType[] componentTypes = reflectionUtility.ComponentTypes.ToArray();
 
         Type systemType = typeof(NetworkDataAssignParentSystem);
         for (int i = 0; i < componentTypes.Length; i++) {
