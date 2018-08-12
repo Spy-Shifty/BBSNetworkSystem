@@ -135,17 +135,21 @@ public class NetworkSendSystem : ComponentSystem {
         ComponentDataArray<NetworkSync> networkSyncs = addedSyncEntities.networkSyncComponents;
 
         for (int i = 0; i < entities.Length; i++) {
-            int instanceId = networkSyncs[i].instanceId;
+            NetworkSync networkSync = networkSyncs[i];
+            int instanceId = networkSync.instanceId;
             NetworkSyncState component = new NetworkSyncState() {
                 actorId = networkManager.LocalPlayerID,
                 networkId = networkManager.GetNetworkId(),
             };
             Entity entity = entities[i];
             PostUpdateCommands.AddComponent(entity, component);
-            PostUpdateCommands.AddComponent(entity, new NetworktOwner());
+
+            if (NetworkUtility.CanAssignAuthority(networkManager, networkSync.authority)) {
+                PostUpdateCommands.AddComponent(entity, new NetworktAuthority());
+            }
 
             NetworkEntityData networkEntityData = new NetworkEntityData {
-                InstanceId = networkSyncs[i].instanceId,
+                InstanceId = networkSync.instanceId,
 
                 NetworkSyncEntity = new NetworkSyncEntity {
                     ActorId = component.actorId,
@@ -154,15 +158,17 @@ public class NetworkSendSystem : ComponentSystem {
             };
 
             for (int j = 0; j < AddComponentDataOnEntityAddedMethods.Count; j++) {
-                if(AddComponentDataOnEntityAddedMethods[j].Invoke(this, ref entity, out ComponentDataContainer componentData)) {
+                if (AddComponentDataOnEntityAddedMethods[j].Invoke(this, ref entity, out ComponentDataContainer componentData)) {
                     networkEntityData.ComponentData.Add(componentData);
                 }
             }
 
             ownNetworkSendMessageUtility.AddEntity(networkEntityData);
-            AllNetworkSendMessageUtility.AddEntity(networkEntityData);            
+            AllNetworkSendMessageUtility.AddEntity(networkEntityData);
         }
     }
+
+   
 
     private void RemovedEntities() {
         EntityArray entities = removedSyncEntities.entities;
@@ -226,7 +232,7 @@ public class NetworkSendSystem : ComponentSystem {
      
     private void AddedComponents<T>() where T : struct, IComponentData {
         ComponentType componentType = ComponentType.Create<T>();
-        ComponentGroup group = GetComponentGroup(ComponentType.Create<NetworkSyncState>(), componentType, ComponentType.Subtractive<NetworkComponentState<T>>(), ComponentType.Create<NetworktOwner>());
+        ComponentGroup group = GetComponentGroup(ComponentType.Create<NetworkSyncState>(), componentType, ComponentType.Subtractive<NetworkComponentState<T>>(), ComponentType.Create<NetworktAuthority>());
         ComponentDataArray<T> components = group.GetComponentDataArray<T>();
         ComponentDataArray<NetworkSyncState> networkSyncStateComponents = group.GetComponentDataArray<NetworkSyncState>();
         EntityArray entities = group.GetEntityArray();
@@ -234,6 +240,7 @@ public class NetworkSendSystem : ComponentSystem {
         NetworkMemberInfo[] networkMemberInfos = reflectionUtility.GetNetworkMemberInfo(componentType);
 
         for (int i = 0; i < entities.Length; i++) {
+
             NetworkSyncState networkSyncState = networkSyncStateComponents[i];
             ComponentDataContainer componentData = new ComponentDataContainer {
                 ComponentTypeId = reflectionUtility.GetComponentTypeID(componentType)
@@ -259,7 +266,7 @@ public class NetworkSendSystem : ComponentSystem {
 
     private void RemovedComponents<T>() where T : IComponentData {
         ComponentType componentType = ComponentType.Create<T>();
-        ComponentGroup group = GetComponentGroup(ComponentType.Create<NetworkSyncState>(), ComponentType.Subtractive<T>(), ComponentType.Create<NetworkComponentState<T>>(), ComponentType.Create<NetworktOwner>());
+        ComponentGroup group = GetComponentGroup(ComponentType.Create<NetworkSyncState>(), ComponentType.Subtractive<T>(), ComponentType.Create<NetworkComponentState<T>>(), ComponentType.Create<NetworktAuthority>());
         ComponentDataArray<NetworkSyncState> networkSyncStateComponents = group.GetComponentDataArray<NetworkSyncState>();
         ComponentDataArray<NetworkComponentState<T>> networkComponentStates = group.GetComponentDataArray<NetworkComponentState<T>>();
         EntityArray entities = group.GetEntityArray();
@@ -276,7 +283,7 @@ public class NetworkSendSystem : ComponentSystem {
 
     private void UpdateDataState<T>() where T : struct, IComponentData {
         ComponentType componentType = ComponentType.Create<T>();
-        ComponentGroup group = GetComponentGroup(ComponentType.Create<NetworkSyncState>(), componentType, ComponentType.Create<NetworkComponentState<T>>(), ComponentType.Create<NetworktOwner>());
+        ComponentGroup group = GetComponentGroup(ComponentType.Create<NetworkSyncState>(), componentType, ComponentType.Create<NetworkComponentState<T>>(), ComponentType.Create<NetworktAuthority>());
         ComponentDataArray<NetworkSyncState> networkSyncStateComponents = group.GetComponentDataArray<NetworkSyncState>();
         ComponentDataArray<T> networkComponents = group.GetComponentDataArray<T>();
         ComponentDataArray<NetworkComponentState<T>> networkComponentStates = group.GetComponentDataArray<NetworkComponentState<T>>();

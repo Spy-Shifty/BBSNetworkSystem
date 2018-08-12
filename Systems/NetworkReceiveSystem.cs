@@ -97,11 +97,13 @@ public class NetworkReceiveSystem : ComponentSystem {
 
 
     private void NetworkManager_OnPlayerLeft(int actorId) {
-        ComponentGroup group = GetComponentGroup(ComponentType.Create<NetworkSyncState>());
+        ComponentGroup group = GetComponentGroup(ComponentType.Create<NetworkSyncState>(), ComponentType.Create<NetworkSync>());
         ComponentDataArray<NetworkSyncState> networkSyncStateComponents = group.GetComponentDataArray<NetworkSyncState>();
+        ComponentDataArray<NetworkSync> networkSyncComponents = group.GetComponentDataArray<NetworkSync>();
+
         EntityArray entities = group.GetEntityArray();
         for (int i = 0; i < entities.Length; i++) {
-            if (networkSyncStateComponents[i].actorId == actorId) {
+            if (networkSyncStateComponents[i].actorId == actorId && networkSyncComponents[i].authority == Authority.Client) {
                 Entity entity = entities[i];
                 PostUpdateCommands.RemoveComponent<NetworkSyncState>(entity);
                 PostUpdateCommands.DestroyEntity(entity);
@@ -116,22 +118,22 @@ public class NetworkReceiveSystem : ComponentSystem {
     }
 
     private void NetworkManager_OnDisconnect() {
-        ComponentGroup group = GetComponentGroup(ComponentType.Create<NetworkSyncState>());
+        ComponentGroup group = GetComponentGroup(ComponentType.Create<NetworkSyncState>(), ComponentType.Create<NetworkSync>());
         ComponentDataArray<NetworkSyncState> networkSyncStateComponents = group.GetComponentDataArray<NetworkSyncState>();
+        ComponentDataArray<NetworkSync> networkSyncComponents = group.GetComponentDataArray<NetworkSync>();
         EntityArray entities = group.GetEntityArray();
         for (int i = 0; i < entities.Length; i++) {
             Entity entity = entities[i];
-            PostUpdateCommands.RemoveComponent<NetworkSyncState>(entity);
-
-            if (networkSyncStateComponents[i].actorId != networkManager.LocalPlayerID) {
+            PostUpdateCommands.RemoveComponent<NetworkSyncState>(entity);            
+            if (networkSyncStateComponents[i].actorId != networkManager.LocalPlayerID && networkSyncComponents[i].authority != Authority.Scene) {
                 PostUpdateCommands.DestroyEntity(entity);
                 if (EntityManager.HasComponent<Transform>(entity)) {
                     gameObjectsToDestroy.Add(EntityManager.GetComponentObject<Transform>(entity).gameObject);
                 }
-            } else {
-                PostUpdateCommands.RemoveComponent<NetworktOwner>(entity);
-            }
+            } else if (EntityManager.HasComponent<NetworktAuthority>(entity)) {
 
+                PostUpdateCommands.RemoveComponent<NetworktAuthority>(entity);
+            }
             for (int j = 0; j < RemoveComponentOnDestroyEntityMethods.Count; j++) {
                 RemoveComponentOnDestroyEntityMethods[j].Invoke(this, entity);
             }
@@ -165,7 +167,13 @@ public class NetworkReceiveSystem : ComponentSystem {
             if (addedNetworkSyncEntities[i].NetworkSyncEntity.ActorId == networkManager.LocalPlayerID) {
                 continue;
             }
+
             Entity entity = reflectionUtility.GetEntityFactoryMethod(addedNetworkSyncEntities[i].InstanceId).Invoke(EntityManager);
+            NetworkSync networkSync = EntityManager.GetComponentData<NetworkSync>(entity);
+            if (NetworkUtility.CanAssignAuthority(networkManager, networkSync.authority)) {
+                PostUpdateCommands.AddComponent(entity, new NetworktAuthority());
+            }
+
             PostUpdateCommands.AddComponent(entity, new NetworkSyncState {
                 actorId = addedNetworkSyncEntities[i].NetworkSyncEntity.ActorId,
                 networkId = addedNetworkSyncEntities[i].NetworkSyncEntity.NetworkId,
@@ -315,7 +323,7 @@ public class NetworkReceiveSystem : ComponentSystem {
     }
 
     void UpdateComponent<T>() where T: struct, IComponentData {
-        var group = GetComponentGroup(ComponentType.ReadOnly<NetworkSync>(), ComponentType.Create<T>(), ComponentType.ReadOnly<NetworkComponentState<T>>(), ComponentType.Subtractive<NetworktOwner>());
+        var group = GetComponentGroup(ComponentType.ReadOnly<NetworkSync>(), ComponentType.Create<T>(), ComponentType.ReadOnly<NetworkComponentState<T>>(), ComponentType.Subtractive<NetworktAuthority>());
 
         EntityArray entities = group.GetEntityArray();
         ComponentDataArray<T> components = group.GetComponentDataArray<T>();

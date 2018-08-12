@@ -44,7 +44,7 @@ using UnityEngine;
 
 #region Public
 
-public struct NetworktOwner : IComponentData { }
+public struct NetworktAuthority : IComponentData { }
 
 #endregion
 
