@@ -5,6 +5,7 @@ using UnityEngine;
 
 public delegate void EventDataDelegate(byte eventId, int playerId, object data);
 public delegate void PlayerJoinedDelegate(int playerId);
+public delegate void MasterClientChangedDelegate(int oldMasterClientId, int newMasterClientId);
 public delegate void PlayerLeftDelegate(int playerId);
 
 public interface INetworkManager {
@@ -16,6 +17,7 @@ public interface INetworkManager {
     event PlayerJoinedDelegate OnPlayerJoined;
     event PlayerLeftDelegate OnPlayerLeft;
     event Action OnDisconnected;
+    event MasterClientChangedDelegate OnMasterClientChanged;
 
     void Update();
     void SendMessage(byte eventId, byte[] data, bool reliable, NetworkEventOptions networkEventOptions);

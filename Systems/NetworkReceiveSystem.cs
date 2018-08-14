@@ -10,6 +10,11 @@ using UnityEngine;
 [AlwaysUpdateSystem]
 [UpdateInGroup(typeof(NetworkUpdateGroup))]
 public class NetworkReceiveSystem : ComponentSystem {
+
+    struct NetworkEntityHash : ISystemStateComponentData {
+        public int hash;
+    }
+
     private const float DeltaTimeMessage = NetworkSendSystem.SendInterval / 1000f;
     public static bool LogReceivedMessages;
 
@@ -24,6 +29,25 @@ public class NetworkReceiveSystem : ComponentSystem {
     private NetworkFactory networkFactory;
     private readonly ReflectionUtility reflectionUtility = new ReflectionUtility();
     private readonly List<GameObject> gameObjectsToDestroy = new List<GameObject>();
+    private readonly NativeHashMap<int, Entity> networkEntityMap = new NativeHashMap<int, Entity>();
+
+    struct AddedNetworkEntities {
+        public ComponentDataArray<NetworkSyncState> networkSyncState;
+        public SubtractiveComponent<NetworkEntityHash> networkEntityHash;
+        public EntityArray entity;
+        public readonly int Length;
+    }
+
+    struct RemovedNetworkEntities {
+        public SubtractiveComponent<NetworkSyncState> networkSyncState;
+        public ComponentDataArray<NetworkEntityHash> networkEntityHash;
+        public EntityArray entity;
+        public readonly int Length;
+    }
+
+    [Inject] AddedNetworkEntities addedNetworkEntities;
+    [Inject] RemovedNetworkEntities removedNetworkEntities;
+
 
     protected override void OnCreateManager(int capacity) {
         networkFactory = new NetworkFactory(EntityManager);
@@ -63,6 +87,7 @@ public class NetworkReceiveSystem : ComponentSystem {
     protected override void OnDestroyManager() {
         messageSerializer.Dispose();
         networkFactory.Dispose();
+        networkEntityMap.Dispose();
     }
 
     protected override void OnStartRunning() {
@@ -74,6 +99,20 @@ public class NetworkReceiveSystem : ComponentSystem {
         if(networkManager == null) {
             return;
         }
+
+        for (int i = 0; i < addedNetworkEntities.Length; i++) {
+            NetworkSyncState networkSyncState = addedNetworkEntities.networkSyncState[i];
+            int hash = NetworkUtility.GetNetworkEntityHash(networkSyncState.actorId, networkSyncState.networkId);
+            networkEntityMap.TryAdd(hash, addedNetworkEntities.entity[i]);
+            PostUpdateCommands.AddComponent(addedNetworkEntities.entity[i], new NetworkEntityHash { hash = hash });
+        }
+
+        for (int i = 0; i < removedNetworkEntities.Length; i++) {
+            int hash = removedNetworkEntities.networkEntityHash[i].hash;
+            networkEntityMap.Remove(hash);
+            PostUpdateCommands.RemoveComponent<NetworkEntityHash>(addedNetworkEntities.entity[i]);
+        }
+
 
         //return;
         networkManager.Update();
@@ -131,13 +170,36 @@ public class NetworkReceiveSystem : ComponentSystem {
                     gameObjectsToDestroy.Add(EntityManager.GetComponentObject<Transform>(entity).gameObject);
                 }
             } else if (EntityManager.HasComponent<NetworktAuthority>(entity)) {
-
                 PostUpdateCommands.RemoveComponent<NetworktAuthority>(entity);
             }
             for (int j = 0; j < RemoveComponentOnDestroyEntityMethods.Count; j++) {
                 RemoveComponentOnDestroyEntityMethods[j].Invoke(this, entity);
             }
 
+        }
+    }
+
+    private void NetworkManager_OnMasterClientChanged(int oldMasterClientId, int newMasterClientId) {
+        if (networkManager.LocalPlayerID == oldMasterClientId) {
+            ComponentGroup group = GetComponentGroup(ComponentType.Create<NetworkSyncState>(), ComponentType.Create<NetworkSync>(), ComponentType.Create<NetworktAuthority>());
+            EntityArray entities = group.GetEntityArray();
+            ComponentDataArray<NetworkSync> networkSync = group.GetComponentDataArray<NetworkSync>();
+            for (int i = 0; i < entities.Length; i++) {
+                if (networkSync[i].authority != Authority.Client) {
+                    PostUpdateCommands.RemoveComponent<NetworktAuthority>(entities[i]);
+                }
+            }
+        }
+
+        if (networkManager.LocalPlayerID == newMasterClientId) {
+            ComponentGroup group = GetComponentGroup(ComponentType.Create<NetworkSyncState>(), ComponentType.Create<NetworkSync>(), ComponentType.Subtractive<NetworktAuthority>());
+            ComponentDataArray<NetworkSync> networkSync = group.GetComponentDataArray<NetworkSync>();
+            EntityArray entities = group.GetEntityArray();
+            for (int i = 0; i < entities.Length; i++) {
+                if (networkSync[i].authority != Authority.Client) {
+                    PostUpdateCommands.AddComponent(entities[i], new NetworktAuthority());
+                }
+            }
         }
     }
 
@@ -150,16 +212,6 @@ public class NetworkReceiveSystem : ComponentSystem {
             Debug.Log("ReceiveNetworkUpdate: " + NetworkMessageUtility.ToString(networkSyncDataContainer));
         }
 
-        ComponentGroup group = GetComponentGroup(ComponentType.Create<NetworkSyncState>());
-        ComponentDataArray<NetworkSyncState> networkSyncStateComponents = group.GetComponentDataArray<NetworkSyncState>();
-        EntityArray entities = group.GetEntityArray();
-
-        NativeHashMap<int, int> entityIndexMap = new NativeHashMap<int, int>(entities.Length, Allocator.Temp);
-        for (int i = 0; i < entities.Length; i++) {
-            NetworkSyncState networkSyncState = networkSyncStateComponents[i];
-            int hash = GetHash(networkSyncState.actorId, networkSyncState.networkId);
-            entityIndexMap.TryAdd(hash, i);
-        }
 
         // added Entities
         List<NetworkEntityData> addedNetworkSyncEntities = networkSyncDataContainer.AddedNetworkSyncEntities;
@@ -197,9 +249,8 @@ public class NetworkReceiveSystem : ComponentSystem {
                 continue;
             }
             NetworkSyncEntity networkSyncEntity = removedNetworkSyncEntities[i];
-            int hash = GetHash(networkSyncEntity.ActorId, networkSyncEntity.NetworkId);
-            if (entityIndexMap.TryGetValue(hash, out int index)) {
-                Entity entity = entities[index];
+            int hash = NetworkUtility.GetNetworkEntityHash(networkSyncEntity.ActorId, networkSyncEntity.NetworkId);
+            if (networkEntityMap.TryGetValue(hash, out Entity entity)) {
                 PostUpdateCommands.RemoveComponent<NetworkSyncState>(entity);
                 PostUpdateCommands.DestroyEntity(entity);
 
@@ -224,11 +275,10 @@ public class NetworkReceiveSystem : ComponentSystem {
                 continue;
             }
 
-            int hash = GetHash(networkSyncEntity.ActorId, networkSyncEntity.NetworkId);
-            if (!entityIndexMap.TryGetValue(hash, out int index)) {
+            int hash = NetworkUtility.GetNetworkEntityHash(networkSyncEntity.ActorId, networkSyncEntity.NetworkId);
+            if (!networkEntityMap.TryGetValue(hash, out Entity entity)) {
                 continue;
             }
-            Entity entity = entities[index];
 
             List<ComponentDataContainer> addedComponents = networkSyncDataEntities[i].AddedComponents;
             List<int> removedComponents = networkSyncDataEntities[i].RemovedComponents;
@@ -258,13 +308,8 @@ public class NetworkReceiveSystem : ComponentSystem {
             NetworkSendSystem.AllNetworkSendMessageUtility.RemoveComponents(entity, networkSyncEntity.ActorId, networkSyncEntity.NetworkId, removedComponents);
             NetworkSendSystem.AllNetworkSendMessageUtility.SetComponentData(entity, networkSyncEntity.ActorId, networkSyncEntity.NetworkId, componentData);
         }
-
-        entityIndexMap.Dispose();
     }
 
-    private static int GetHash(int actorId, int networkId) {
-        return (int)unchecked(math.pow(actorId, networkId));
-    }
 
     void AddComponent<T>(Entity entity, List<MemberDataContainer> memberDataContainers) where T : struct, IComponentData {
         //Debug.Log(typeof(T));
@@ -274,7 +319,7 @@ public class NetworkReceiveSystem : ComponentSystem {
             T component = new T();
             for (int i = 0; i < memberDataContainers.Count; i++) {
                 int value = memberDataContainers[i].Data;
-                (networkMemberInfos[i] as NetworkMemberInfo<T>).SetValue(ref component, value, value, Time.deltaTime, NetworkSendSystem.SendInterval);
+                (networkMemberInfos[i] as NetworkMemberInfo<T>).SetValue(ref component, value, value, Time.deltaTime, NetworkSendSystem.SendInterval, networkEntityMap);
             }
             PostUpdateCommands.AddComponent(entity, component);
         }
@@ -336,7 +381,7 @@ public class NetworkReceiveSystem : ComponentSystem {
             //Debug.Log(componentStates[i].dataEntity);
             NativeArray<int> values = EntityManager.GetFixedArray<int>(componentStates[i].dataEntity);
             for (int j = 0; j < values.Length; j+=2) {
-                (networkMemberInfos[j/2] as NetworkMemberInfo<T>).SetValue(ref component, values[j], values[j+1], Time.deltaTime, DeltaTimeMessage);
+                (networkMemberInfos[j/2] as NetworkMemberInfo<T>).SetValue(ref component, values[j], values[j+1], Time.deltaTime, DeltaTimeMessage, networkEntityMap);
             }
             components[i] = component;
         }        
@@ -348,6 +393,7 @@ public class NetworkReceiveSystem : ComponentSystem {
             this.networkManager.OnEventData -= NetworkManager_OnEventData;
             this.networkManager.OnPlayerLeft -= NetworkManager_OnPlayerLeft;
             this.networkManager.OnDisconnected -= NetworkManager_OnDisconnect;
+            this.networkManager.OnMasterClientChanged -= NetworkManager_OnMasterClientChanged;
         }
         this.networkManager = networkManager;
 
@@ -355,8 +401,10 @@ public class NetworkReceiveSystem : ComponentSystem {
             networkManager.OnEventData += NetworkManager_OnEventData;
             this.networkManager.OnPlayerLeft += NetworkManager_OnPlayerLeft;
             this.networkManager.OnDisconnected += NetworkManager_OnDisconnect;
+            this.networkManager.OnMasterClientChanged += NetworkManager_OnMasterClientChanged;
         }
 
         Enabled = networkManager != null;
     }
+
 }

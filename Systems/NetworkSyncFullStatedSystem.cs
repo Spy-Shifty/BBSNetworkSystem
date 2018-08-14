@@ -117,6 +117,7 @@ public class NetworkSyncFullStatedSystem : ComponentSystem {
         if (EntityManager.HasComponent<T>(entity)) {
             ComponentType componentType = ComponentType.Create<T>();
             int numberOfMembers = reflectionUtility.GetNumberOfMembers(componentType.GetManagedType());
+            ComponentDataFromEntity<NetworkSyncState> networkSyncStateEntities = EntityManager.GetComponentDataFromEntity<NetworkSyncState>();
 
             T component = EntityManager.GetComponentData<T>(entity);
             NetworkMemberInfo[] networkMemberInfos = reflectionUtility.GetNetworkMemberInfo(componentType);
@@ -124,7 +125,7 @@ public class NetworkSyncFullStatedSystem : ComponentSystem {
             for (int i = 0; i < numberOfMembers; i++) {
                 memberDataContainers.Add(new MemberDataContainer() {
                     MemberId = i,
-                    Data = (networkMemberInfos[i] as NetworkMemberInfo<T>).GetValue(component)
+                    Data = (networkMemberInfos[i] as NetworkMemberInfo<T>).GetValue(component, networkSyncStateEntities)
                 });
             }
 

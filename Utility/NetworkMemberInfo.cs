@@ -1,5 +1,7 @@
 ﻿using System;
 using System.Reflection;
+using Unity.Collections;
+using Unity.Entities;
 
 internal abstract class NetworkMemberInfo { }
 
@@ -9,8 +11,8 @@ internal abstract class NetworkMemberInfo<OBJ> : NetworkMemberInfo {
         this.netSyncOptions = netSyncOptions;
     }
 
-    public abstract void SetValue(ref OBJ obj, int oldValue, int newValue, float deltaTimeFrame, float deltaTimeMessage);
-    public abstract int GetValue(OBJ obj);
+    public abstract void SetValue(ref OBJ obj, int oldValue, int newValue, float deltaTimeFrame, float deltaTimeMessage, NativeHashMap<int, Entity> entityHashMap);
+    public abstract int GetValue(OBJ obj, ComponentDataFromEntity<NetworkSyncState> networkSyncStateEntities);
 }
 
 internal sealed class NetworkMemberInfo<OBJ, TYPE> : NetworkMemberInfo<OBJ> {
@@ -48,6 +50,8 @@ internal sealed class NetworkMemberInfo<OBJ, TYPE> : NetworkMemberInfo<OBJ> {
             networkMath = new NetworkMathFloat(netSyncOptions.Accuracy, netSyncOptions.LerpSpeed, netSyncOptions.JumpThreshold);
         } else if (typeType == typeof(boolean)) {
             networkMath = new NetworkMathBoolean();
+        } else if(typeType == typeof(Entity)) {
+            networkMath = new NetworkMathEntity();
         }
     }
 
@@ -55,12 +59,12 @@ internal sealed class NetworkMemberInfo<OBJ, TYPE> : NetworkMemberInfo<OBJ> {
         this.parent = parent;
     }
 
-    public override void SetValue(ref OBJ obj, int oldValue, int newValue, float deltaTimeFrame, float deltaTimeMessage) {
-        SetValueDelegate(ref obj, (TYPE)networkMath.IntegerToNative(GetValueDelegate(ref obj), oldValue, newValue, deltaTimeFrame, deltaTimeMessage));
+    public override void SetValue(ref OBJ obj, int oldValue, int newValue, float deltaTimeFrame, float deltaTimeMessage, NativeHashMap<int, Entity> entityHashMap) {
+        SetValueDelegate(ref obj, (TYPE)networkMath.IntegerToNative(GetValueDelegate(ref obj), oldValue, newValue, deltaTimeFrame, deltaTimeMessage, entityHashMap));
     }
 
-    public override int GetValue(OBJ obj) {
-        return networkMath.NativeToInteger(GetValueDelegate(ref obj));
+    public override int GetValue(OBJ obj, ComponentDataFromEntity<NetworkSyncState> networkSyncStateEntities) {
+        return networkMath.NativeToInteger(GetValueDelegate(ref obj), networkSyncStateEntities);
     }
 }
 
@@ -104,15 +108,15 @@ internal sealed class NetworkMemberInfo<Parent_OBJ, OBJ, TYPE> : NetworkMemberIn
         }
     }
 
-    public override void SetValue(ref Parent_OBJ parentObj, int oldValue, int newValue, float deltaTimeFrame, float deltaTimeMessage) {
+    public override void SetValue(ref Parent_OBJ parentObj, int oldValue, int newValue, float deltaTimeFrame, float deltaTimeMessage, NativeHashMap<int, Entity> entityHashMap) {
         OBJ obj = parent.GetValueDelegate(ref parentObj);
-        SetValueDelegate(ref obj, (TYPE)networkMath.IntegerToNative(GetValueDelegate(ref obj), oldValue, newValue, deltaTimeFrame, deltaTimeMessage));
+        SetValueDelegate(ref obj, (TYPE)networkMath.IntegerToNative(GetValueDelegate(ref obj), oldValue, newValue, deltaTimeFrame, deltaTimeMessage, entityHashMap));
         parent.SetValueDelegate(ref parentObj, obj);
     }
 
-    public override int GetValue(Parent_OBJ parentObj) {
+    public override int GetValue(Parent_OBJ parentObj, ComponentDataFromEntity<NetworkSyncState> networkSyncStateEntities) {
         OBJ obj = parent.GetValueDelegate(ref parentObj);
-        return networkMath.NativeToInteger(GetValueDelegate(ref obj));
+        return networkMath.NativeToInteger(GetValueDelegate(ref obj), networkSyncStateEntities);
     }
 }
 
