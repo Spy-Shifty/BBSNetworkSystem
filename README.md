@@ -43,27 +43,43 @@ public struct Position : IComponentData {
 ```
 
 # Components
-## NetworktOwner
+## NetworktAuthority
 ```csharp
-public struct NetworktOwner : IComponentData { }
+public struct NetworktAuthority : IComponentData { }
 ```
 
-This component is used to identify if the current entity is owned by my self.
+This component is used to identify if the current entity is authoritative by myself.
 It will be added and removed automatically by the NetworkSystem. 
 Don't add this component manually!!!
 
+Hint: NetworktOwner was renamed to NetworktAuthority
+
 ## NetworkSync
 ```csharp
+public enum Authority {
+    Client,
+    Master,
+    Scene,
+}
+
 public struct NetworkSync : IComponentData {
-    public int instanceId;
+    public int instanceId;    
+    public Authority authority;
 }
 ```
 
 This component requires each entity which should be synchronized with the network.
 The instanceId member is an unique identifier and represents an specific type of entity. It is used to identify which method of the NetworkEntityFactory is used to create this entity on the remote client.
+The authority member is used to define if the instance is authoritative to the instantiated client, the master or to the scene.
 
-Take a look into the [NetworkEntityFactory] and [NetworkEntityFactoryMethod] section to get more details.
 
+Client: Only the client can send the entity state through the network. The entity is associated to the instantiating client (will be destroyed if the client left the game)
+Master: Only the master can send the entity state through the network. The entity is associated to the instantiating client (will be destroyed if the client left the game)
+Scene: Only the master can send the entity state through the network. The entity  is not associated to any client (remains in the scene if the instantiating player left the game)
+
+Take a look into the [NetworktAuthority], [NetworkEntityFactory] and [NetworkEntityFactoryMethod] section to get more details.
+
+Hint: Changes made on the component at runtime won't be synchronized through the network.
 
 # Attributes
 ## [NetSync]
@@ -100,7 +116,9 @@ public struct PositionProxy : IComponentData {
 ```
 
 ## [NetSyncMember]
-This attribute ensures that the component member will be synchronized through the network. Supported types are boolean, integer and float. Structs like Quaternion and Vecor3 can be synchronized with the NetSyncSubMember attribute.
+This attribute ensures that the component member will be synchronized through the network. Supported types are boolean, integer, Entity and float. Structs like Quaternion and Vecor3 can be synchronized with the NetSyncSubMember attribute.
+
+Hint: Entity references can only be synchronized through the network if the referring entity is also known through the network. That means the referring entity has to be Network aSync component attached.
 
 ### Parameter (used floatingpoint only):
 
@@ -205,6 +223,7 @@ The NetworkManager is used as interface to communicate with the Network.
 ```csharp
 public delegate void EventDataDelegate(byte eventId, int playerId, object data);
 public delegate void PlayerJoinedDelegate(int playerId);
+public delegate void MasterClientChangedDelegate(int oldMasterClientId, int newMasterClientId);
 public delegate void PlayerLeftDelegate(int playerId);
 
 public interface INetworkManager {
@@ -216,6 +235,7 @@ public interface INetworkManager {
     event PlayerJoinedDelegate OnPlayerJoined;
     event PlayerLeftDelegate OnPlayerLeft;
     event Action OnDisconnected;
+    event MasterClientChangedDelegate OnMasterClientChanged;
 
     void Update();
     void SendMessage(byte eventId, byte[] data, bool reliable, NetworkEventOptions networkEventOptions);
@@ -241,7 +261,8 @@ IsConnectedAndReady: Is true if we are connected and a LocalPlayerId is assigned
 OnEventData: will be called if a message has received.
 OnPlayerJoined: will be called if a player has joined the game
 OnPlayerLeft: will be called if a player has left the game
-OnDisconnected: will be calld if we have been disconnected from the game
+OnDisconnected: will be called if we have been disconnected from the game
+OnMasterClientChanged: will be called if the master client has been changed
 Update: Read all data from the message buffer. Should fire OnEventData
 SendMessage: sends a message with the given options
 GetNetworkId(): should generate a localy unique identifier, is used to identify instances of entities through the network.  
