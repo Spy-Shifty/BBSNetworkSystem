@@ -49,7 +49,7 @@ public class NetworkReceiveSystem : ComponentSystem {
     [Inject] RemovedNetworkEntities removedNetworkEntities;
 
 
-    protected override void OnCreateManager(int capacity) {
+    protected override void OnCreateManager() {
         networkFactory = new NetworkFactory(EntityManager);
         ComponentType[] componentTypes = reflectionUtility.ComponentTypes.ToArray();
         Type networkSystemType = typeof(NetworkReceiveSystem);
@@ -326,7 +326,7 @@ public class NetworkReceiveSystem : ComponentSystem {
 
         if (!EntityManager.HasComponent<NetworkComponentState<T>>(entity)) {
             Entity syncEntity = networkFactory.CreateNetworkComponentData<T>(entity, numberOfMembers);
-            NativeArray<int> values = networkFactory.NetworkEntityManager.GetFixedArray<int>(syncEntity);
+            DynamicBuffer<int> values = EntityManager.GetBuffer<NetworkValue>(syncEntity).Reinterpret<int>();
             for (int i = 0; i < memberDataContainers.Count; i++) {
                 int index = i * 2;
                 values[index] = memberDataContainers[i].Data;
@@ -359,7 +359,7 @@ public class NetworkReceiveSystem : ComponentSystem {
             return;
         }
 
-        NativeArray<int> values = EntityManager.GetFixedArray<int>(EntityManager.GetComponentData<NetworkComponentState<T>>(entity).dataEntity);
+        DynamicBuffer<int> values = EntityManager.GetBuffer<NetworkValue>(EntityManager.GetComponentData<NetworkComponentState<T>>(entity).dataEntity).Reinterpret<int>();
         for (int i = 0; i < memberDataContainers.Count; i++) {
             int index = memberDataContainers[i].MemberId * 2;
             values[index] = values[index + 1];
@@ -379,7 +379,7 @@ public class NetworkReceiveSystem : ComponentSystem {
         for (int i = 0; i < entities.Length; i++) {
             T component = components[i];
             //Debug.Log(componentStates[i].dataEntity);
-            NativeArray<int> values = EntityManager.GetFixedArray<int>(componentStates[i].dataEntity);
+            DynamicBuffer<int> values = EntityManager.GetBuffer<NetworkValue>(componentStates[i].dataEntity).Reinterpret<int>();
             for (int j = 0; j < values.Length; j+=2) {
                 (networkMemberInfos[j/2] as NetworkMemberInfo<T>).SetValue(ref component, values[j], values[j+1], Time.deltaTime, DeltaTimeMessage, networkEntityMap);
             }

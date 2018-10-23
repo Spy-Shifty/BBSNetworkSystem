@@ -54,7 +54,7 @@ public class NetworkSendSystem : ComponentSystem {
     internal static string LastSendMessage { get; private set; }
 
 
-    protected override void OnCreateManager(int capacity) {
+    protected override void OnCreateManager() {
         messageSerializer = new NetworkMessageSerializer<NetworkSyncDataContainer>();
         ComponentType[] componentTypes = reflectionUtility.ComponentTypes.ToArray();
         networkFactory = new NetworkFactory(EntityManager);
@@ -208,7 +208,7 @@ public class NetworkSendSystem : ComponentSystem {
             ComponentType componentType = ComponentType.Create<T>();
             int numberOfMembers = reflectionUtility.GetNumberOfMembers(componentType.GetManagedType());
             Entity networkDataEntity = networkFactory.CreateNetworkComponentData<T>(entity, numberOfMembers);
-            NativeArray<int> values = networkFactory.NetworkEntityManager.GetFixedArray<int>(networkDataEntity);
+            DynamicBuffer<int> values = networkFactory.NetworkEntityManager.GetBuffer<NetworkValue>(networkDataEntity).Reinterpret<int>();
             PostUpdateCommands.AddComponent(entity, new NetworkComponentState<T>());
 
             T component = EntityManager.GetComponentData<T>(entity);
@@ -296,7 +296,7 @@ public class NetworkSendSystem : ComponentSystem {
 
         NetworkMemberInfo[] networkMemberInfos = reflectionUtility.GetNetworkMemberInfo(componentType);
         for (int i = 0; i < entities.Length; i++) {            
-            NativeArray<int> values = EntityManager.GetFixedArray<int>(networkComponentStates[i].dataEntity);
+            DynamicBuffer<int> values = EntityManager.GetBuffer<NetworkValue>(networkComponentStates[i].dataEntity).Reinterpret<int>();
             ComponentDataContainer componentDataContainer = new ComponentDataContainer {
                 ComponentTypeId = reflectionUtility.GetComponentTypeID(componentType),
             };

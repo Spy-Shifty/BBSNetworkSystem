@@ -53,7 +53,7 @@ internal class NetworkMathFloat: NetworkMath {
         float newFloatValue = (float)newValue / accuracy;
         float currentValue = (float)fieldValue;
 
-        if (jumpThreshold != 0 && math.greaterThan(math.abs(newFloatValue - currentValue), jumpThreshold)) {
+        if (jumpThreshold != 0 && math.abs(newFloatValue - currentValue) > jumpThreshold) {
             return newFloatValue;
         }
 

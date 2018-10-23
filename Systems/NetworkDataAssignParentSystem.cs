@@ -12,7 +12,7 @@ public class NetworkDataAssignParentSystem : ComponentSystem {
 
     private readonly ReflectionUtility reflectionUtility = new ReflectionUtility();
 
-    protected override void OnCreateManager(int capacity) {
+    protected override void OnCreateManager() {
         ComponentType[] componentTypes = reflectionUtility.ComponentTypes.ToArray();
 
         Type systemType = typeof(NetworkDataAssignParentSystem);

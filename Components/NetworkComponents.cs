@@ -50,6 +50,10 @@ public struct NetworktAuthority : IComponentData { }
 
 #region Internal
 
+public struct NetworkValue : IBufferElementData {
+    public int Value;
+}
+
 public struct NetworkSyncState : ISystemStateComponentData {
     public int networkId;
     public int actorId;

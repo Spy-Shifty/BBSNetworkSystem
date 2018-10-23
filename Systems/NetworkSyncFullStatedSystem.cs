@@ -34,7 +34,7 @@ public class NetworkSyncFullStatedSystem : ComponentSystem {
     private readonly List<int> jonedPlayer = new List<int>();
     private readonly ReflectionUtility reflectionUtility = new ReflectionUtility();
 
-    protected override void OnCreateManager(int capacity) {
+    protected override void OnCreateManager() {
         messageSerializer = new NetworkMessageSerializer<NetworkSyncDataContainer>();
         ComponentType[] componentTypes = reflectionUtility.ComponentTypes.ToArray();
         GetComponentGroup(typeof(NetworkSync));
